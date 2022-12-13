@@ -1,5 +1,5 @@
 // template of wrapper for bitstream computing circuit
-// 2021-09-10 Naoki F., AIT
+// 2022-12-12 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 module user_wrapper (
@@ -26,9 +26,10 @@ module user_wrapper (
 
     // bit widths of input/output of computing circuit (respectively)
     localparam src_size = 6;
-    localparam src_mode = 12'b000000000000;
+    localparam src_mode = 6'b000000;
     localparam dst_size = 2;
-    localparam dst_mode = 4'b0000;
+    localparam dst_mode = 2'b00;
+    localparam mode_len = 1;
 
     // states of the wrapper circuit
     typedef enum {
@@ -115,7 +116,7 @@ module user_wrapper (
             assign src_comp_we[i] = read_en && (count == i * 2);
             assign src_seed_we[i] = read_en && (count == i * 2 + 1);
             sn_gen # (
-                .MODE    (src_mode[i * 2 +: 2]))
+                .MODE    (src_mode[i * mode_len +: mode_len]))
             sng (
                 .CLK     (CLK),
                 .RST_X   (RST_X),
@@ -134,7 +135,7 @@ module user_wrapper (
                 assign dst_data_in[i] = dst_data[i + 1];
             end
             count_ones # (
-                .MODE    (dst_mode[i * 2 +: 2]))
+                .MODE    (dst_mode[i * mode_len +: mode_len]))
             cnt (
                 .CLK     (CLK),
                 .RST_X   (RST_X),

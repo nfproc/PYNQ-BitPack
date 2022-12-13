@@ -1,5 +1,5 @@
-// Stochastic Number Generator
-// 2021-09-07 Naoki F., AIT
+// Template of Stochastic Number Generator
+// 2022-12-12 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 module sn_gen (
@@ -8,7 +8,7 @@ module sn_gen (
     input  logic        COMP_WE, SEED_WE,
     output logic        SN_OUT_P, SN_OUT_N);
 
-    parameter [1:0] MODE = 2'd0; // 0 = unipolar, 1 = bipolar, 2 = two-line
+    parameter [0:0] MODE = 1'd0;
 
     logic [31:0] shift_data, n_shift_data;
     logic        shift_in;
@@ -31,22 +31,10 @@ module sn_gen (
 
     // Comparison with threshold
     always_comb begin
-        if (MODE == 2'd0) begin
-            // unipolar mode, negative value will be truncated to zero
-            n_comp_reg = (~DATA_IN[31]) ? DATA_IN: 0;
-            n_sn_out_p = (n_shift_data[31:1] < comp_reg[30:0]);
-            n_sn_out_n = 1'bx;
-        end else if (MODE == 2'd1) begin
-            // bipolar mode, the sign bit (MSB) will be inverted
-            n_comp_reg = {~DATA_IN[31], DATA_IN[30:0]};
-            n_sn_out_p = (n_shift_data < comp_reg);
-            n_sn_out_n = 1'bx;
-        end else begin
-            // two-line mode, value will be converted to sign and magnitude
-            n_comp_reg = DATA_IN ^ {1'b0, {31{DATA_IN[31]}}};
-            n_sn_out_p = (n_shift_data[31:1] < comp_reg[30:0]) && ~comp_reg[31];
-            n_sn_out_n = (n_shift_data[31:1] < comp_reg[30:0]) &&  comp_reg[31];
-        end
+        // unipolar mode, negative value will be truncated to zero
+        n_comp_reg = (~DATA_IN[31]) ? DATA_IN: 0;
+        n_sn_out_p = (n_shift_data[31:1] < comp_reg[30:0]);
+        n_sn_out_n = 1'bx;
     end
 
     always_ff @ (posedge CLK) begin

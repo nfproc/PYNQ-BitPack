@@ -1,5 +1,5 @@
-// Counter for number of ones
-// 2021-09-07 Naoki F., AIT
+// Template of counter for number of ones
+// 2022-12-12 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 module count_ones (
@@ -9,21 +9,12 @@ module count_ones (
     input  logic        DATA_WE,
     output logic [31:0] DATA_OUT);
 
-    parameter [1:0] MODE = 2'd0; // 0 = unipolar, 1 = bipolar, 2 = two-line
+    parameter [0:0] MODE = 1'd0;
 
     logic [31:0] n_count;
     always_comb begin
-        if (MODE == 2'd0) begin
-            // unipolar mode, count the number of ones simply
-            n_count = (SN_IN_P) ? DATA_OUT + 1'b1 : DATA_OUT;
-        end else if (MODE == 2'd1) begin
-            // bipolar mode, decrement counter when input is '0'
-            n_count = (SN_IN_P) ? DATA_OUT + 1'b1 : DATA_OUT - 1'b1;
-        end else begin
-            // two-line mode, increment when P is '1' and decrement when N is '1'
-            n_count = (SN_IN_P & ~ SN_IN_N) ? DATA_OUT + 1'b1 :
-                      (SN_IN_N & ~ SN_IN_P) ? DATA_OUT - 1'b1 : DATA_OUT;
-        end
+        // unipolar mode, count the number of ones simply
+        n_count = (SN_IN_P) ? DATA_OUT + 1'b1 : DATA_OUT;
     end
 
     always_ff @ (posedge CLK) begin

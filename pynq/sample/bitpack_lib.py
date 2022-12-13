@@ -17,10 +17,14 @@ class BitPackDriver(DefaultIP):
     # instantiate I/O classes
     srcs = bpio.BitPackInputVector(6)
     _A = srcs[0:3+1]
+    _A.setvaluerange(1.0, 0.0)
     _SEL = srcs[4:5+1]
+    _SEL.setvaluerange(1.0, 0.0)
     dsts = bpio.BitPackOutputVector(2)
     _PROD = dsts[0]
+    _PROD.setvaluerange(1.0, 0.0)
     _AVG = dsts[1]
+    _AVG.setvaluerange(1.0, 0.0)
     
     cycle = property()
     @cycle.setter

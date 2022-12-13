@@ -1,0 +1,54 @@
+[
+  {
+    "name": "unipolar",
+    "default": true,
+    "postfix": [],
+    "maximum": 1.0,
+    "minimum": 0.0,
+    "generator": [
+      "// unipolar mode, negative value will be truncated to zero",
+      "n_comp_reg = (~DATA_IN[31]) ? DATA_IN: 0;",
+      "n_sn_out_p = (n_shift_data[31:1] < comp_reg[30:0]);",
+      "n_sn_out_n = 1'bx;"
+    ],
+    "counter": [
+      "// unipolar mode, count the number of ones simply",
+      "n_count = (SN_IN_P) ? DATA_OUT + 1'b1 : DATA_OUT;"
+    ]
+  },
+  {
+    "name": "bipolar",
+    "default": false,
+    "postfix": ["_b"],
+    "maximum": 1.0,
+    "minimum": -1.0,
+    "generator": [
+      "// bipolar mode, the sign bit (MSB) will be inverted",
+      "n_comp_reg = {~DATA_IN[31], DATA_IN[30:0]};",
+      "n_sn_out_p = (n_shift_data < comp_reg);",
+      "n_sn_out_n = 1'bx;"
+    ],
+    "counter": [
+      "// bipolar mode, decrement counter when input is '0'",
+      "n_count = (SN_IN_P) ? DATA_OUT + 1'b1 : DATA_OUT - 1'b1;"
+    ]
+  },
+  {
+    "name": "twoline",
+    "default": false,
+    "postfix": ["_p", "_m"],
+    "maximum": 1.0,
+    "minimum": -1.0,
+    "generator": [
+      "// two-line mode, value will be converted to sign and magnitude",
+      "n_comp_reg = DATA_IN ^ {1'b0, {31{DATA_IN[31]}}};",
+      "n_sn_out_p = (n_shift_data[31:1] < comp_reg[30:0]) && ~comp_reg[31];",
+      "n_sn_out_n = (n_shift_data[31:1] < comp_reg[30:0]) &&  comp_reg[31];"
+    ],
+    "counter": [
+      "// two-line mode, increment when P is '1' and decrement when N is '1'",
+      "n_count = (SN_IN_P & ~ SN_IN_N) ? DATA_OUT + 1'b1 :",
+      "          (SN_IN_N & ~ SN_IN_P) ? DATA_OUT - 1'b1 : DATA_OUT;"
+    ]
+  }
+]
