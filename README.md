@@ -177,6 +177,10 @@ The `binary_value` member is the value of that port, multiplied by 0x7fffffff
 The seed must not be zero. The hexadecimal expressions of these 32-bit
 integers have to be prepared in a text file named `input.txt`.
 
+If you already worked with PYNQ-Z1, you can get the content of `input.txt`
+of a specific input by calling the `core.print_testvector()` method after
+`core.start()`.
+
 The output array is an array of 32-bit signed integers. Since each integer
 corresponds to the value of an output counter, the value of the output port
 is obtained by dividing it by the length of stochastic numbers (4096 by
@@ -216,6 +220,11 @@ has to meet the following rules.
 ChangeLog
 ---------
 
+### v0.2.1 2023-10-02
+- PYNQ buffers are now allocated only in the first time, to prevent resource
+  shortage, as freed buffers might not be reallocated.
+- Add `print_testvector()` method to the (template of) Python library.
+
 ### v0.2.0 2022-12-13
 - In order to make it easy to add another mode of SN generator and counter
   (or representation of SN), modes are now defined in a JSON file. This
@@ -235,4 +244,4 @@ PYNQ-BitPack, are developed by <a href="https://aitech.ac.jp/~dslab/nf/index.en.
 These are licensed under the New BSD license.
 See the COPYING file for more information.
 
-Copyright (C) 2021 Naoki FUJIEDA. All rights reserved.
+Copyright (C) 2021-2023 Naoki FUJIEDA. All rights reserved.

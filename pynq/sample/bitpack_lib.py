@@ -1,5 +1,5 @@
 # template of custom driver for bitstream computation circuit
-# 2021-09-10 Naoki F., AIT
+# 2023-10-02 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import bitpack_lib_io as bpio
@@ -9,6 +9,15 @@ from pynq import allocate
 class BitPackDriver(DefaultIP):
     def __init__(self, description):
         super().__init__(description=description)
+        self.srcbuf = None
+        self.dstbuf = None
+    
+    def __del__(self):
+        # deallocate the buffers
+        if self.srcbuf is not None:
+            self.srcbuf.freebuffer()
+        if self.dstbuf is not None:
+            self.dstbuf.freebuffer()
     
     bindto = ['AIT:DSLab:bitpack_top:1.0']
 
@@ -37,15 +46,17 @@ class BitPackDriver(DefaultIP):
 
     def start(self):
         # allocate the I/O buffers
-        srcbuf = allocate(shape=(self.srcs.size() * 2), dtype='u4')
-        dstbuf = allocate(shape=(self.dsts.size()), dtype='u4')
+        if self.srcbuf is None:
+            self.srcbuf = allocate(shape=(self.srcs.size() * 2), dtype='u4')
+        if self.dstbuf is None:
+            self.dstbuf = allocate(shape=(self.dsts.size()), dtype='u4')
 
         # write to input buffer
-        srcbuf[:] = self.srcs.asarray()
+        self.srcbuf[:] = self.srcs.asarray()
 
         # invoke the core
-        self.write(4, srcbuf.device_address)
-        self.write(8, dstbuf.device_address)
+        self.write(4, self.srcbuf.device_address)
+        self.write(8, self.dstbuf.device_address)
         self.write(12, self.__cycle)
         self.write(0, 1)
         while self.read(0) == 1:
@@ -55,8 +66,8 @@ class BitPackDriver(DefaultIP):
             pass
 
         # read from output buffer
-        self.dsts.setfromcount(dstbuf, self.__cycle)
+        self.dsts.setfromcount(self.dstbuf, self.__cycle)
 
-        # deallocate the buffers
-        srcbuf.freebuffer()
-        dstbuf.freebuffer()
+    def print_testvector(self):
+        for x in self.srcs.asarray():
+            print("%08x" % x)
