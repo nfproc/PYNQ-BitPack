@@ -1,5 +1,5 @@
 # code generator for bitstream computation package
-# v0.2, 2022-12-13 Naoki F., AIT
+# v0.2.2, 2023-10-12 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import os
@@ -54,10 +54,11 @@ def putiodef(out, space, inports, outports, nummodes):
     for vname, ports in [['src', inports], ['dst', outports]]:
         out.append('{0}localparam {1}_size = {2};\n'.format(space, vname, portlen(ports)))
         newline = "{0}localparam {1}_mode = {2}'b".format(space, vname, portlen(ports) * modelen)
+        modestr = ""
         for signame, length, moderef, pair in ports:
             bits = bitfmt.format(moderef['id'])
-            newline += bits * length
-        newline += ';\n'
+            modestr = (bits * length) + modestr
+        newline += modestr + ';\n'
         out.append(newline)
     out.append("{0}localparam mode_len = {1};\n".format(space, modelen))
 

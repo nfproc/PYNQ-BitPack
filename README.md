@@ -220,6 +220,10 @@ has to meet the following rules.
 ChangeLog
 ---------
 
+### v0.2.2 2023-10-12
+- Fix a bug of the code generator that the order of the parameter bit strings
+  for I/O mode (`src_mode` and `dst_mode`) was reversed.
+  
 ### v0.2.1 2023-10-02
 - PYNQ buffers are now allocated only in the first time, to prevent resource
   shortage, as freed buffers might not be reallocated.
