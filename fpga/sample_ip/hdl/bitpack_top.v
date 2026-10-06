@@ -51,7 +51,7 @@ module bitpack_top (
     output         AXI_FIFO_AWVALID,
     input          AXI_FIFO_AWREADY,
     output [31: 0] AXI_FIFO_WDATA,
-    output [ 7: 0] AXI_FIFO_WSTRB,
+    output [ 3: 0] AXI_FIFO_WSTRB,
     output         AXI_FIFO_WLAST,
     output         AXI_FIFO_WVALID,
     input          AXI_FIFO_WREADY,

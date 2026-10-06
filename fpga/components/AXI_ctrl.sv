@@ -1,4 +1,4 @@
-// AXI-lite Slave Controller 2020.03.11 Naoki F., AIT
+// AXI-lite Slave Controller 2026.10.06 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 module AXI_ctrl (
@@ -82,7 +82,7 @@ module AXI_ctrl (
     always_ff @ (posedge AXI_CTRL_ACLK) begin
         if (~ AXI_CTRL_ARESETN) begin
             USER_GO   <= 1'b0;
-            USER_SIZE <= 16'd512;
+            USER_SIZE <= 32'd512;
             USER_SRC  <= 0;
             USER_DST  <= 0;
         end else if (reg_we) begin
@@ -112,7 +112,7 @@ module AXI_ctrl (
     // -- 2. ARADDR を記憶し，ARREADY をアサート
     // -- 3. 読み出しを行い，RVALID をアサートし，ARREADY をネゲート
     // -- 4. RREADY がアサートされたら RVALID をネゲート
-    logic [31: 0] d_araddr;
+    logic [ 1: 0] d_araddr;
     logic         n_arready, n_rvalid;
     logic [31: 0] n_rdata;
     logic         reg_re;

@@ -211,7 +211,11 @@ module bitpack_test ();
         wait (finalize);
         fd = $fopen("output.txt", "w");
         count = 'h100;
+`ifdef VERILATOR
+        while (bfm.vld_array[count]) begin
+`else
         while (^bfm.ram_array[count] !== 1'bx) begin
+`endif
             ram_data = bfm.ram_array[count];
             $fdisplay(fd, "%h", ram_data);
             count = count + 1'b1;

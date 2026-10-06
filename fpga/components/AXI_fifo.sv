@@ -1,4 +1,4 @@
-// FIFO Interface for AXI-full Master IPs 2020.03.12 Naoki F., AIT
+// FIFO Interface for AXI-full Master IPs 2026.10.06 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 module AXI_FIFO (
@@ -101,12 +101,13 @@ module AXI_FIFO (
     logic        n_arvalid;
     logic [31:0] read_next, n_read_next;
     logic [15:0] read_rest, n_read_rest;
-    logic [ 8:0] read_length;
     logic [15:0] read_reqs, n_read_reqs;
 
     assign READ_BUSY = AXI_M_ARVALID;
 
     always_comb begin
+        logic [ 8:0] read_length = 'x;
+
         n_araddr    = AXI_M_ARADDR;
         n_arlen     = AXI_M_ARLEN;
         n_arvalid   = AXI_M_ARVALID;
@@ -117,10 +118,10 @@ module AXI_FIFO (
             if (READ_REQ) begin 
                 read_length = trans_length(READ_ADDR, READ_COUNT);
                 n_araddr    = READ_ADDR;
-                n_arlen     = read_length - 1'b1;
+                n_arlen     = read_length[7:0] - 'b1;
                 n_arvalid   = 1'b1;
-                n_read_next = READ_ADDR + (read_length << 2);
-                n_read_rest = READ_COUNT - read_length;
+                n_read_next = READ_ADDR + 32'({read_length, 2'b00});
+                n_read_rest = READ_COUNT - 16'(read_length);
             end
         end else begin // リクエストあり -> 既存リクエストの受理待ち
             if (AXI_M_ARREADY) begin 
@@ -129,9 +130,9 @@ module AXI_FIFO (
                 end else begin
                     read_length = trans_length(read_next, read_rest);
                     n_araddr    = read_next;
-                    n_arlen     = read_length - 1'b1;
-                    n_read_next = read_next + (read_length << 2);
-                    n_read_rest = read_rest - read_length;
+                    n_arlen     = read_length[7:0] - 'b1;
+                    n_read_next = read_next + 32'({read_length, 2'b00});
+                    n_read_rest = read_rest - 16'(read_length);
                 end
             end
         end
@@ -208,11 +209,12 @@ module AXI_FIFO (
     logic        n_write_busy;
     logic [31:0] write_next, n_write_next;
     logic [15:0] write_rest, n_write_rest;
-    logic [ 8:0] write_length;
 
     assign wl_fifo_in = n_awlen;
 
     always_comb begin
+        logic [ 8:0] write_length = 'x;
+
         n_awaddr     = AXI_M_AWADDR;
         n_awlen      = AXI_M_AWLEN;
         n_awvalid    = AXI_M_AWVALID;
@@ -224,11 +226,11 @@ module AXI_FIFO (
             if (WRITE_REQ) begin 
                 write_length = trans_length(WRITE_ADDR, WRITE_COUNT);
                 n_awaddr     = WRITE_ADDR;
-                n_awlen      = write_length - 1'b1;
+                n_awlen      = write_length[7:0] - 'b1;
                 n_awvalid    = ~ wl_fifo_full;
                 n_write_busy = 1'b1;
-                n_write_next = WRITE_ADDR + (write_length << 2);
-                n_write_rest = WRITE_COUNT - write_length;
+                n_write_next = WRITE_ADDR  + 32'({write_length, 2'b00});
+                n_write_rest = WRITE_COUNT - 16'(write_length);
                 wl_fifo_we   = ~ wl_fifo_full;
             end
         end else if (~ AXI_M_AWVALID) begin // FIFO がフル -> FIFOの解放待ち
@@ -244,10 +246,10 @@ module AXI_FIFO (
                 end else begin
                     write_length = trans_length(write_next, write_rest);
                     n_awaddr     = write_next;
-                    n_awlen      = write_length - 1'b1;
+                    n_awlen      = write_length[7:0] - 'b1;
                     n_awvalid    = ~ wl_fifo_full;
-                    n_write_next = write_next + (write_length << 2);
-                    n_write_rest = write_rest - write_length;
+                    n_write_next = write_next + 32'({write_length, 2'b00});
+                    n_write_rest = write_rest - 16'(write_length);
                     wl_fifo_we   = ~ wl_fifo_full;
                 end
             end

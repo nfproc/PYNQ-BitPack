@@ -1,5 +1,5 @@
 // Template of Stochastic Number Generator
-// 2022-12-12 Naoki F., AIT
+// 2026-10-06 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 module sn_gen (
@@ -39,7 +39,7 @@ module sn_gen (
 
     always_ff @ (posedge CLK) begin
         if (~ RST_X) begin
-            comp_reg <= 31'd0;
+            comp_reg <= 'd0;
             SN_OUT_P <= 1'b0;
             SN_OUT_N <= 1'b0;
         end else begin
