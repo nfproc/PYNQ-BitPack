@@ -1,0 +1,8 @@
+fpga/testbench/axi_slave_bfm.v linguist-vendored
+fpga/testbench/sync_fifo.v linguist-vendored
+fpga/script/make_bd.tcl linguist-vendored
+fpga/sample_ip/* linguist-vendored
+fpga/sample_ip/hdl/* linguist-vendored
+fpga/sample_ip/xgui/* linguist-vendored
+pynq/sample/bitpack_lib.py linguist-vendored
+verilator/hdl/* linguist-vendored
