@@ -3,6 +3,7 @@
 # New BSD license is applied. See COPYING for more details.
 
 import bitpack_lib_io as bpio
+import bitpack_lib_rand as bprand
 from pynq import DefaultIP
 from pynq import allocate
 
@@ -11,6 +12,7 @@ class BitPackDriver(DefaultIP):
         super().__init__(description=description)
         self.srcbuf = None
         self.dstbuf = None
+        self.rng = None
     
     def __del__(self):
         # deallocate the buffers
@@ -22,7 +24,7 @@ class BitPackDriver(DefaultIP):
     bindto = ['AIT:DSLab:bitpack_top:1.0']
 
     __cycle = 1024
-
+    
     # instantiate I/O classes
     # BITPACK_IO_INSTANCES
     
@@ -34,6 +36,9 @@ class BitPackDriver(DefaultIP):
     def resetseeds(self):
         for src in self.srcs:
             src.seed = 0
+        
+    def setrng(self, rng):
+        self.rng = rng
 
     def start(self):
         # allocate the I/O buffers
@@ -43,6 +48,9 @@ class BitPackDriver(DefaultIP):
             self.dstbuf = allocate(shape=(self.dsts.size()), dtype='u4')
 
         # write to input buffer
+        if self.rng is None:
+            self.rng = bprand.BitPackRandom(12345) # seed of the PRNG
+        self.srcs.setrng(self.rng)
         self.srcbuf[:] = self.srcs.asarray()
 
         # invoke the core

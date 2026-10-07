@@ -3,19 +3,37 @@
 # New BSD license is applied. See COPYING for more details.
 
 import numpy as np
-import random
 
 class BitPackInput():
+    RANDOM = object() # special value: request a random value in asarray()
     __value = 0.0
+    __random = False
     __seed  = 0
     __max   = 1.0
     __min   = 0.0
+    __rng   = None
+
+    def __init__(self, rng=None):
+        self.__rng = rng
+
+    def setrng(self, rng):
+        self.__rng = rng
+
+    def _getrand(self):
+        if self.__rng is None:
+            raise RuntimeError("no BitPackRandom instance is set; "
+                               "pass it to the constructor or call setrng()")
+        return self.__rng.next()
 
     value = property()
     @value.setter
     def value(self, value):
-        self.__value = ( self.__max if (value > self.__max) else
-                         self.__min if (value < self.__min) else value)
+        if value is self.RANDOM:
+            self.__random = True
+        else:
+            self.__random = False
+            self.__value = ( self.__max if (value > self.__max) else
+                             self.__min if (value < self.__min) else value)
 
     seed = property()
     @seed.setter
@@ -25,28 +43,48 @@ class BitPackInput():
     def setvaluerange(self, newmax, newmin):
         self.__max = newmax
         self.__min = newmin
+        if self.__random:
+            return # nothing to truncate for a random value
         self.value = self.__value # call the setter of value to truncate if needed
     
     def asarray(self):
-        if self.__value >= 0.0:
+        if self.__random:
+            r = self._getrand()
+            if self.__max > 0.0 and self.__min < 0.0:
+                uvalue = r
+            elif self.__max > 0.0 and self.__min == 0.0:
+                uvalue = r & 0x7fffffff
+            elif self.__max == 0.0 and self.__min < 0.0:
+                uvalue = 0x80000000 | (r & 0x7fffffff)
+            else:
+                uvalue = 0
+        elif self.__value >= 0.0:
             if self.__max == 0.0:
                 uvalue = 0
             else:
                 uvalue = self.__value / self.__max * 0x7fffffff
         else:
-            uvalue = 0x100000000 + self.__value / (-self.__min) * 0x7fffffff
+            if self.__min == 0.0:
+                uvalue = 0
+            else:
+                uvalue = 0x100000000 + self.__value / (-self.__min) * 0x7fffffff
+                 
         while(self.__seed == 0):
-            self.__seed = random.getrandbits(32)
+            self.__seed = self._getrand()
         return np.array([uvalue, self.__seed], dtype='u4')
 
 class BitPackInputVector():
-    def __init__(self, arg):
+    def __init__(self, arg, rng=None):
         if isinstance(arg, list):
             self.__ins = arg
         else:
             self.__ins = []
             for i in range(arg):
-                self.__ins.append(BitPackInput())
+                self.__ins.append(BitPackInput(rng))
+
+    def setrng(self, rng):
+        for i in range(self.size()):
+            self.__ins[i].setrng(rng)
     
     def __getitem__(self, key):
         if isinstance(key, slice):

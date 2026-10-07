@@ -137,6 +137,7 @@ Prepare a folder that contains the following files:
 - `bitpack_lib.py`: custom driver in either the `pynq/sample` folder or
   the `code_generator/bit_addmul` folder,
 - `bitpack_lib_io.py`: I/O port classes in the `pynq/lib` folder,
+- `bitpack_lib_rand.py`: PRNG class in the `pynq/lib` folder,
 - `bitpack_sample.bit`: bitstream file generated in Step 3, and
 - `bitpack_sample.hwh`: hardware handoff file generated in Step 3.
 
@@ -239,6 +240,10 @@ has to meet the following rules.
 ChangeLog
 ---------
 
+### v0.2.4 2026-10-07
+- For more reproducible experiments, a custom random number generator was
+  implemented, instead of Python's standard one.
+
 ### v0.2.3 2026-10-06
 - Improve Verilog and SystemVerilog description to avoid Verilator's warnings.
 - The Sample IP and the block design generation script were regenetated with
@@ -272,4 +277,4 @@ PYNQ-BitPack, are developed by <a href="https://aitech.ac.jp/~dslab/nf/index.en.
 These are licensed under the New BSD license.
 See the COPYING file for more information.
 
-Copyright (C) 2021-2023 Naoki FUJIEDA. All rights reserved.
+Copyright (C) 2021-2026 Naoki FUJIEDA. All rights reserved.
