@@ -1,5 +1,5 @@
 # template of custom driver for bitstream computation circuit
-# 2023-10-02 Naoki F., AIT
+# 2026-10-07 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import bitpack_lib_io as bpio

@@ -1,5 +1,5 @@
 # code generator for bitstream computation package
-# v0.2.2, 2023-10-12 Naoki F., AIT
+# v0.2.5, 2026-10-09 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import os
@@ -13,7 +13,7 @@ from functools import reduce
 # constants definition
 template_dir = os.path.dirname(os.path.abspath(__file__)) + '/template/'
 modes_file = os.path.dirname(os.path.abspath(__file__)) + '/mode_definition.json'
-filenames = ['bitpack_lib.py', 'user_wrapper.sv', 'sn_gen.sv', 'count.sv']
+filenames = ['bitpack_lib.py', 'user_wrapper.sv', 'sn_gen.sv', 'count.sv', 'eval.json']
 
 md_pattern =  r'module\s+(\w+)'
 md_prog = re.compile(md_pattern)
@@ -109,6 +109,33 @@ def putgendef(out, space, nummodes, modes, genmode):
         out.append('{0}end\n'.format(space))
 
 ###########################################################################################
+# function definition for generating eval.json
+def putevaljson(inports, outports):
+    def makeentry(signame, length, i, moderef):
+        entry = {
+            'name': signame if length == 1 else '{0}[{1}]'.format(signame, i),
+            'maximum': moderef['maximum'],
+            'minimum': moderef['minimum'],
+        }
+        return entry
+
+    def makeentries(ports):
+        entries = []
+        for signame, length, moderef, pair in ports:
+            for i in range(length):
+                entries.append(makeentry(signame, length, i, moderef))
+        return entries
+
+    evaldict = {
+        'input': [dict(e, random=True, values=[]) for e in makeentries(inports)],
+        'output': makeentries(outports),
+        'cycle': 1000,
+        'times': 1000,
+        'seed': 12345,
+    }
+    return evaldict
+
+###########################################################################################
 # function definition for parse a line of SystemVerilog file of SC circuit
 # TODO: deal with multi-line comment with /* */
 def parseline(line):
@@ -184,83 +211,93 @@ def parseline(line):
 
 ###########################################################################################
 # main routine starts from here
-if len(sys.argv) != 3:
-    sys.stderr.write('usage: python3 bitpack_gen.py SOURCE_FILE OUTPUT_DIR\n')
-    sys.exit(1)
+def bitpack_gen_main():
+    global modes
+    if len(sys.argv) != 3:
+        sys.stderr.write('usage: python3 bitpack_gen.py SOURCE_FILE OUTPUT_DIR\n')
+        sys.exit(1)
 
-with open(modes_file) as f:
-    modes = json.load(f)
-for mode in modes:
-    mode["used"] = False
+    with open(modes_file) as f:
+        modes = json.load(f)
+    for mode in modes:
+        mode["used"] = False
 
-# Parse a source SystemVerilog file
-print('## detecting input/output ports from source file')
-module = None
-clock = None
-reset = None
-inports = []
-outports = []
-with open(sys.argv[1]) as f:
-    lines = f.readlines()
-for line in lines:
-    direction, port = parseline(line)
-    if direction == 'module':
-        module = port
-    elif direction == 'clock':
-        clock = port[0]
-        if port[1] is not None:
-            reset = port[1]
-    elif direction == 'reset':
-        reset = port
-    elif direction == 'in':
-        inports.append(port)
-    elif direction == 'out':
-        outports.append(port)
-
-# Check if the circuit is valid
-print('')
-if module is None:
-    print("!! module is not detected. stop.")
-    sys.exit(1)
-if clock is None:
-    print("!! clock input is not detected. stop.")
-    sys.exit(1)
-
-# Assign mode ID for each of used modes
-nummodes = 0
-for mode in modes:
-    if mode['used']:
-        mode['id'] = nummodes
-        nummodes += 1
-
-# Generate codes
-Path(sys.argv[2]).mkdir(exist_ok=True)
-for filename in filenames:
-    srcname = template_dir + filename
-    dstname = sys.argv[2] + '/' + filename
-    print("## generating " + dstname)
-    with open(srcname) as f:
+    # Parse a source SystemVerilog file
+    print('## detecting input/output ports from source file')
+    module = None
+    clock = None
+    reset = None
+    inports = []
+    outports = []
+    with open(sys.argv[1]) as f:
         lines = f.readlines()
-    newlines = []
     for line in lines:
-        m = bp_prog.match(line)
-        if m is None:
-            newlines.append(line)
+        direction, port = parseline(line)
+        if direction == 'module':
+            module = port
+        elif direction == 'clock':
+            clock = port[0]
+            if port[1] is not None:
+                reset = port[1]
+        elif direction == 'reset':
+            reset = port
+        elif direction == 'in':
+            inports.append(port)
+        elif direction == 'out':
+            outports.append(port)
+
+    # Check if the circuit is valid
+    print('')
+    if module is None:
+        print("!! module is not detected. stop.")
+        sys.exit(1)
+    if clock is None:
+        print("!! clock input is not detected. stop.")
+        sys.exit(1)
+
+    # Assign mode ID for each of used modes
+    nummodes = 0
+    for mode in modes:
+        if mode['used']:
+            mode['id'] = nummodes
+            nummodes += 1
+
+    # Generate codes
+    Path(sys.argv[2]).mkdir(exist_ok=True)
+    for filename in filenames:
+        dstname = sys.argv[2] + '/' + filename
+        print("## generating " + dstname)
+        if filename == 'eval.json':
+            with open(dstname, 'w') as f:
+                json.dump(putevaljson(inports, outports), f, indent=4)
+                f.write('\n')
             continue
-        if m[3] == 'IO_INSTANCES':
-            putioinst(newlines, m[1], inports, outports)
-        elif m[3] == 'IO_DEFINITIONS':
-            putiodef(newlines, m[1], inports, outports, nummodes)
-        elif m[3] == 'CIRCUIT_INSTANCE':
-            putbcinst(newlines, m[1], module, clock, reset, inports, outports)
-        elif m[3] == 'MODE_PARAMETER':
-            putmodeparam(newlines, m[1], nummodes)
-        elif m[3] == 'GENERATOR_DEFINITIONS':
-            putgendef(newlines, m[1], nummodes, modes, 'generator')
-        elif m[3] == 'COUNTER_DEFINITIONS':
-            putgendef(newlines, m[1], nummodes, modes, 'counter')
-        else:
-            newlines.append(line)
-            print("  ! unknown keyword BITPACK_{0}. skip.".format(m[3]))
-    with open(dstname, 'w') as f:
-        f.writelines(newlines)
+        srcname = template_dir + filename
+        with open(srcname) as f:
+            lines = f.readlines()
+        newlines = []
+        for line in lines:
+            m = bp_prog.match(line)
+            if m is None:
+                newlines.append(line)
+                continue
+            if m[3] == 'IO_INSTANCES':
+                putioinst(newlines, m[1], inports, outports)
+            elif m[3] == 'IO_DEFINITIONS':
+                putiodef(newlines, m[1], inports, outports, nummodes)
+            elif m[3] == 'CIRCUIT_INSTANCE':
+                putbcinst(newlines, m[1], module, clock, reset, inports, outports)
+            elif m[3] == 'MODE_PARAMETER':
+                putmodeparam(newlines, m[1], nummodes)
+            elif m[3] == 'GENERATOR_DEFINITIONS':
+                putgendef(newlines, m[1], nummodes, modes, 'generator')
+            elif m[3] == 'COUNTER_DEFINITIONS':
+                putgendef(newlines, m[1], nummodes, modes, 'counter')
+            else:
+                newlines.append(line)
+                print("  ! unknown keyword BITPACK_{0}. skip.".format(m[3]))
+        with open(dstname, 'w') as f:
+            f.writelines(newlines)
+
+if __name__ == "__main__":
+    bitpack_gen_main()

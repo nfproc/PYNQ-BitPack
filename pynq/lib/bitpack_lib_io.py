@@ -1,5 +1,5 @@
 # custom driver for I/O ports of bitstream computation circuit
-# 2022-12-12 Naoki F., AIT
+# 2026-10-09 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import numpy as np
@@ -67,7 +67,7 @@ class BitPackInput():
             if self.__min == 0.0:
                 uvalue = 0
             else:
-                uvalue = 0x100000000 + self.__value / (-self.__min) * 0x7fffffff
+                uvalue = 0x100000000 + self.__value / (-self.__min) * 0x80000000
                  
         while(self.__seed == 0):
             self.__seed = self._getrand()
