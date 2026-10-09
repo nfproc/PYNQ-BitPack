@@ -41,9 +41,9 @@ def putioinst(out, space, inports, outports):
                 newline += ':{0}+1'.format(start + length - 1)
             newline += ']\n'
             out.append(newline)
-            maxv = moderef['maximum']
-            minv = moderef['minimum']
-            newline = '{0}_{1}.setvaluerange({2}, {3})\n'.format(space, signame, maxv, minv)
+            hn = moderef['has_negative']
+            den = moderef['denominator']
+            newline = '{0}_{1}.setvaluerange({2}, {3})\n'.format(space, signame, hn, den)
             out.append(newline)
             start += length
 
@@ -114,8 +114,8 @@ def putevaljson(inports, outports):
     def makeentry(signame, length, i, moderef):
         entry = {
             'name': signame if length == 1 else '{0}[{1}]'.format(signame, i),
-            'maximum': moderef['maximum'],
-            'minimum': moderef['minimum'],
+            'has_negative': moderef['has_negative'],
+            'denominator': moderef['denominator'],
         }
         return entry
 

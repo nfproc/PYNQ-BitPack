@@ -1,5 +1,5 @@
 # template of custom driver for bitstream computation circuit
-# 2023-10-02 Naoki F., AIT
+# 2026-10-07 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import bitpack_lib_io as bpio
@@ -24,18 +24,18 @@ class BitPackDriver(DefaultIP):
     bindto = ['AIT:DSLab:bitpack_top:1.0']
 
     __cycle = 1024
-
+    
     # instantiate I/O classes
     srcs = bpio.BitPackInputVector(6)
     _A = srcs[0:3+1]
-    _A.setvaluerange(1.0, 0.0)
+    _A.setvaluerange(False, 1.0)
     _SEL = srcs[4:5+1]
-    _SEL.setvaluerange(1.0, 0.0)
+    _SEL.setvaluerange(False, 1.0)
     dsts = bpio.BitPackOutputVector(2)
     _PROD = dsts[0]
-    _PROD.setvaluerange(1.0, 0.0)
+    _PROD.setvaluerange(False, 1.0)
     _AVG = dsts[1]
-    _AVG.setvaluerange(1.0, 0.0)
+    _AVG.setvaluerange(False, 1.0)
     
     cycle = property()
     @cycle.setter

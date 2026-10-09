@@ -240,6 +240,13 @@ has to meet the following rules.
 ChangeLog
 ---------
 
+### v0.2.5 2026-10-09
+- For an iterative evaluation (which will be supported in v0.3.0), the code
+  generator now makes an evaluation settings file (`eval.json`).
+- Conversion algorithm between binary and stochastic numbers was revisited:
+  it is now controlled by `has_negative` and `denominator`, instead of
+  `maximum` and `minimum`.
+
 ### v0.2.4 2026-10-07
 - For more reproducible experiments, a custom random number generator was
   implemented, instead of Python's standard one.

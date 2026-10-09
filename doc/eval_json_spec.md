@@ -18,8 +18,8 @@
 `"input"` には，以下のキーをもつ辞書のリストを格納する．
 
 - `"name"`: 文字列．信号名
-- `"maximum"`: 浮動小数点数．その信号の実数値がとりうる値の最大値
-- `"minimum"`: 浮動小数点数．その信号の実数値がとりうる値の最小値
+- `"has_negative"`: 真理値．その信号の実数値が負の値をとりうるかどうか
+- `"denominator"`: 浮動小数点数．実数値・ビット列間の相互変換における除算の分母
 - `"random"`: 真理値．評価においてその信号の値としてランダムな値を使うかどうか
 - `"values"`: 浮動小数点数のリスト．`"random"` が偽の場合，その信号の値として使う値の候補．
               `"random"` が真の場合は無視される（通常，空のリストとしておく）
@@ -73,22 +73,22 @@ endmodule
     "input": [
         {
             "name": "A[0]",
-            "maximum": 1.0,
-            "minimum": 0.0,
+            "has_negative": false,
+            "denominator": 1.0,
             "random": true,
             "values": []
         },
         {
             "name": "A[1]",
-            "maximum": 1.0,
-            "minimum": 0.0,
+            "has_negative": false,
+            "denominator": 1.0,
             "random": true,
             "values": []
         },
         {
             "name": "SEL",
-            "maximum": 1.0,
-            "minimum": 0.0,
+            "has_negative": false,
+            "denominator": 1.0,
             "random": true,
             "values": []
         }
@@ -96,8 +96,8 @@ endmodule
     "output": [
         {
             "name": "AVG",
-            "maximum": 1.0,
-            "minimum": 0.0
+            "has_negative": false,
+            "denominator": 1.0
         }
     ],
     "cycle": 1000,

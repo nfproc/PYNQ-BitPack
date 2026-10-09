@@ -3,8 +3,8 @@
     "name": "unipolar",
     "default": true,
     "postfix": [],
-    "maximum": 1.0,
-    "minimum": 0.0,
+    "has_negative": false,
+    "denominator": 1.0,
     "generator": [
       "// unipolar mode, negative value will be truncated to zero",
       "n_comp_reg = (~DATA_IN[31]) ? DATA_IN: 0;",
@@ -20,8 +20,8 @@
     "name": "bipolar",
     "default": false,
     "postfix": ["_b"],
-    "maximum": 1.0,
-    "minimum": -1.0,
+    "has_negative": true,
+    "denominator": 1.0,
     "generator": [
       "// bipolar mode, the sign bit (MSB) will be inverted",
       "n_comp_reg = {~DATA_IN[31], DATA_IN[30:0]};",
@@ -37,8 +37,8 @@
     "name": "twoline",
     "default": false,
     "postfix": ["_p", "_m"],
-    "maximum": 1.0,
-    "minimum": -1.0,
+    "has_negative": true,
+    "denominator": 1.0,
     "generator": [
       "// two-line mode, value will be converted to sign and magnitude",
       "n_comp_reg = DATA_IN ^ {1'b0, {31{DATA_IN[31]}}};",
