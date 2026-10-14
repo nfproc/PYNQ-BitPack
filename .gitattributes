@@ -6,3 +6,4 @@ fpga/sample_ip/hdl/* linguist-vendored
 fpga/sample_ip/xgui/* linguist-vendored
 pynq/sample/bitpack_lib.py linguist-vendored
 verilator/hdl/* linguist-vendored
+verilator/eval.json linguist-vendored

@@ -43,6 +43,9 @@ The hierarchy of the repository is as follows:
 - `pynq`: custom driver of the framework IP core on PYNQ
   - `lib`: a part of the driver that abstracts I/O ports
   - `sample`: driver and notebook for sample IP core
+- `verilator`: source files for simulation of the generated circuit
+  - `hdl`: the sample circuit with the generated wrapper
+  - `testbench`: sources of C++ testbench that drives the circuit
 
 -----------------------------------------------------------------------
 
@@ -160,7 +163,7 @@ as seeds of stochastic number generators.
 Use of testbench
 ----------------
 
-### Testbench for the whole IP Core
+### Testbench for the whole IP Core (with Vivado Simulator or Verilator)
 
 This repository also includes a testbench of the framework IP core in the
 `fpga/testbench` folder. The testbench requires the `axi_slave_bfm` module
@@ -212,6 +215,40 @@ Check if the `input.txt` file is in the current directory and run the
 executable. It will say `Verilog $finish` and the `output.txt` file will
 be generated.
 
+### Testbench for the wrapper circuit (with Verilator only)
+
+Starting from v0.3.0, BitPack has supported simulation of the wrapper circuit,
+excluding AXI controllers, using Verilator. As this simulation supports
+iterative invocation of the circuit, you will find it useful for evaluation
+of precision, sensitivity of bitstring length, and so on.
+
+To build the simulator, the user circuit and all of the SystemVerilog files
+geneated by the code generator must be copied to the `verilator/hdl` folder.
+The evaluation settings file `eval.json` should also be replaced with the
+generated one. After that, just run `make` in the `verilator` folder.
+This will translate SystemVerilog files into C++ Verilated sources and build
+them with C++ testbench sources. If everything goes well, you will find the
+`bitpack_eval` executable file in that folder.
+
+The executable takes one optional argument: the path of the evaluation
+settings file. If no arguments are provided, `eval.json` in the working
+directory will be loaded. By default, it sets all inputs to random values and
+runs the simulation 1,000 times with a bit length of 1,000. This behavior can
+be modified by updating eval.json. For details, please refer to the eval.json
+specification document (`doc/eval_json_spec.md`, written in Japanese).
+
+When the testbench completes execution successfully, three files will be 
+created in the working directory: `results.txt`, `input.txt` and `output.txt`.
+The `results.txt` file will record, per trial, one line containing real values
+of all of the input and output ports, separated by spaces. The binary values
+sent to and received from the wrapper circuit are recorded in `input.txt` and
+`output.txt` files, respectively.
+
+The `eval.json` file can also be used in evaluations with a real machine of
+PYNQ. In this case, use the `bitpack_eval.ipynb` notebook in the `pynq/sample`
+folder instead. This is designed to produce exactly the same content of
+`results.txt` as the simulation.
+
 -----------------------------------------------------------------------
 
 Restriction of Source Code of User Circuit
@@ -239,6 +276,12 @@ has to meet the following rules.
 
 ChangeLog
 ---------
+
+### v0.3.0 2026-10-14
+- Iterative simulation using Verilator is supported. See the "Testbench for
+  the wrapper circuit" section of this file for details.
+- Iterative evaluation using real machine of PYNQ, corresponding to the above
+  simulation, is also supported.
 
 ### v0.2.5 2026-10-09
 - For an iterative evaluation (which will be supported in v0.3.0), the code

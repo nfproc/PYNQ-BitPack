@@ -1,5 +1,5 @@
 # template of custom driver for bitstream computation circuit
-# 2026-10-07 Naoki F., AIT
+# 2026-10-14 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 import bitpack_lib_io as bpio
@@ -59,7 +59,7 @@ class BitPackDriver(DefaultIP):
         # write to input buffer
         if self.rng is None:
             self.rng = bprand.BitPackRandom(12345) # seed of the PRNG
-        self.srcs.setrng(self.rng)
+        self.srcs.rng = self.rng
         self.srcbuf[:] = self.srcs.asarray()
 
         # invoke the core

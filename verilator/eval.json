@@ -1,0 +1,61 @@
+{
+    "input": [
+        {
+            "name": "A[0]",
+            "has_negative": false,
+            "denominator": 1.0,
+            "random": true,
+            "values": []
+        },
+        {
+            "name": "A[1]",
+            "has_negative": false,
+            "denominator": 1.0,
+            "random": true,
+            "values": []
+        },
+        {
+            "name": "A[2]",
+            "has_negative": false,
+            "denominator": 1.0,
+            "random": true,
+            "values": []
+        },
+        {
+            "name": "A[3]",
+            "has_negative": false,
+            "denominator": 1.0,
+            "random": true,
+            "values": []
+        },
+        {
+            "name": "SEL[0]",
+            "has_negative": false,
+            "denominator": 1.0,
+            "random": true,
+            "values": []
+        },
+        {
+            "name": "SEL[1]",
+            "has_negative": false,
+            "denominator": 1.0,
+            "random": true,
+            "values": []
+        }
+    ],
+    "output": [
+        {
+            "name": "PROD",
+            "has_negative": false,
+            "denominator": 1.0
+        },
+        {
+            "name": "AVG",
+            "has_negative": false,
+            "denominator": 1.0
+        }
+    ],
+    "cycle": 1000,
+    "times": 1000,
+    "seed": 12345
+}

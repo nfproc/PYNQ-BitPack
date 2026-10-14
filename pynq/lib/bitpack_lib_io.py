@@ -1,12 +1,25 @@
 # custom driver for I/O ports of bitstream computation circuit
-# 2026-10-09 Naoki F., AIT
+# 2026-10-14 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
+
+"""bitpack_lib_io.py
+
+Provides interfaces for input and output ports of the target stochastic computing circuit.
+The library consists of four classes:
+- BitPackInput:        single-bit input
+- BitPackInputVector:  multiple-bit input
+- BitPackOutput:       single-bit output
+- BitPackOutputVector: multple-bit output
+"""
 
 import numpy as np
 
 class BitPackInput():
+    """Interface for an input port of single bit of the target circuit."""
+
     RANDOM = object() # special value: request a random value in asarray()
     __value = 0.0
+    __uvalue = None
     __random = False
     __seed  = 0
     __has_negative = False
@@ -14,16 +27,18 @@ class BitPackInput():
     __rng   = None
 
     def __init__(self, rng=None):
-        self.__rng = rng
-
-    def setrng(self, rng):
-        self.__rng = rng
+        self.rng = rng
 
     def _getrand(self):
         if self.__rng is None:
             raise RuntimeError("no BitPackRandom instance is set; "
-                               "pass it to the constructor or call setrng()")
+                               "pass it to the constructor or set the 'rng' property")
         return self.__rng.next()
+
+    rng = property()
+    @rng.setter
+    def rng(self, value):
+        self.__rng = value
 
     value = property()
     @value.setter
@@ -36,6 +51,7 @@ class BitPackInput():
             minv = -self.__denominator if self.__has_negative else 0.0
             self.__value = ( maxv if (value > maxv) else
                              minv if (value < minv) else value)
+        self.__uvalue = None
 
     seed = property()
     @seed.setter
@@ -43,6 +59,13 @@ class BitPackInput():
         self.__seed = value
 
     def setvaluerange(self, arg1, arg2):
+        """Set the range of values for this port.
+
+        This has two styles of arguments for compatibility:
+        - new style: (has_negative (bool), denominator (float))
+        - old style: (max (float), min (float))
+        See doc/eval_json_spec.md for details of the new-style arguments.
+        """
         if isinstance(arg1, bool):
             # new style: (has_negative, denominator)
             self.__has_negative = arg1
@@ -62,26 +85,63 @@ class BitPackInput():
             return # nothing to truncate for a random value
         self.value = self.__value # call the setter of value to truncate if needed
 
-    def asarray(self):
+    def getvalueword(self):
+        """Translate a real value into a 32-bit binary value.
+
+        Note that calling this method might have a side effect:
+        if a random value has been requested, its actual value is generated here.
+        The generated value will remain unchanged until the 'value' is set again.
+        """
+        if self.__uvalue is not None:
+            return self.__uvalue
         if self.__random:
             r = self._getrand()
             if self.__has_negative:
-                uvalue = r
+                self.__uvalue = r
             else:
-                uvalue = r & 0x7fffffff
+                self.__uvalue = r & 0x7fffffff
         elif self.__value >= 0.0:
-            uvalue = self.__value / self.__denominator * 0x7fffffff
+            self.__uvalue = self.__value / self.__denominator * 0x7fffffff
         else:
             if self.__has_negative:
-                uvalue = 0x100000000 + self.__value / self.__denominator * 0x80000000
+                self.__uvalue = 0x100000000 + self.__value / self.__denominator * 0x80000000
             else:
-                uvalue = 0
+                self.__uvalue = 0
+        return self.__uvalue
 
+    def getvaluereal(self):
+        """Translate a 32-bit binary value into a real value.
+
+        This is equivalent to real_value() of the C++ version,
+        which performs the inverse transform of getvalueword() for a random value.
+        """
+        if self.__random:
+            if self.__has_negative and ((self.__uvalue & 0x80000000) != 0):
+                return ((self.__uvalue & 0x80000000) / 0x80000000 - 1) * self.__denominator
+            else:
+                return (self.__uvalue / 0x7fffffff) * self.__denominator
+        else:
+            return self.__value
+
+    def getseedword(self):
+        """Returns a 32-bit seed for an internal LFSR in the circuit.
+
+        Note that calling this method might also have a side effect:
+        if the seed has not been set, a random number is generated and set as the seed
+        until a non-zero number is generated.
+        The LFSR will not work correctly for a seed of zero.
+        """
         while(self.__seed == 0):
             self.__seed = self._getrand()
-        return np.array([uvalue, self.__seed], dtype='u4')
+        return self.__seed
+
+    def asarray(self):
+        """Returns a pair of value and seed as 32-bit words."""
+        return np.array([self.getvalueword(), self.getseedword()], dtype='u4')
 
 class BitPackInputVector():
+    """Interface for an input port of multiple bits of the target circuit."""
+
     def __init__(self, arg, rng=None):
         if isinstance(arg, list):
             self.__ins = arg
@@ -90,15 +150,20 @@ class BitPackInputVector():
             for i in range(arg):
                 self.__ins.append(BitPackInput(rng))
 
-    def setrng(self, rng):
-        for i in range(self.size()):
-            self.__ins[i].setrng(rng)
-
     def __getitem__(self, key):
         if isinstance(key, slice):
             return BitPackInputVector(self.__ins[key])
         else:
             return self.__ins[key]
+
+    def __len__(self):
+        return len(self.__ins)
+
+    rng = property()
+    @rng.setter
+    def rng(self, value):
+        for i in range(self.size()):
+            self.__ins[i].rng = value
 
     values = property()
     @values.setter
@@ -107,7 +172,7 @@ class BitPackInputVector():
             self.__ins[i].value = values[i]
 
     def size(self):
-        return len(self.__ins)
+        return len(self.__ins) # for compatibility
 
     def setvaluerange(self, arg1, arg2):
         for i in range(self.size()):
@@ -116,10 +181,14 @@ class BitPackInputVector():
     def asarray(self):
         ary = np.empty(self.size() * 2, dtype='u4')
         for i in range(self.size()):
-            ary[i*2:i*2+2] = self.__ins[i].asarray()
+            ary[i * 2] = self.__ins[i].getvalueword() # consume random numbers for values at first
+        for i in range(self.size()):
+            ary[i * 2 + 1] = self.__ins[i].getseedword()
         return ary
 
 class BitPackOutput():
+    """Interface for an output port of single bit of the target circuit."""
+
     __value = 0.0
     __has_negative = False
     __denominator  = 1.0
@@ -129,6 +198,13 @@ class BitPackOutput():
         return self.__value
 
     def setvaluerange(self, arg1, arg2):
+        """Set the range of values for this port.
+
+        This has two styles of arguments for compatibility:
+        - new style: (has_negative (bool), denominator (float))
+        - old style: (max (float), min (float))
+        See doc/eval_json_spec.md for details of the new-style arguments.
+        """
         if isinstance(arg1, bool):
             # new style: (has_negative, denominator)
             self.__has_negative = arg1
@@ -146,12 +222,15 @@ class BitPackOutput():
             raise ValueError(f"Unknown arguments for setvaluerange: ({arg1}, {arg2})")
 
     def setfromcount(self, count, size):
+        """Calculate and set the real value of this port from the counter value."""
         if (count & 0x80000000) == 0:
             self.__value = count / size / self.__denominator
         else:
             self.__value = (count - 0x100000000) / size / self.__denominator
 
 class BitPackOutputVector():
+    """Interface for an output port of multiple bits of the target circuit."""
+
     def __init__(self, arg):
         if isinstance(arg, list):
             self.__outs = arg
@@ -165,6 +244,9 @@ class BitPackOutputVector():
             return BitPackOutputVector(self.__outs[key])
         else:
             return self.__outs[key]
+            
+    def __len__(self):
+        return len(self.__outs)
 
     @property
     def values(self):
@@ -173,8 +255,8 @@ class BitPackOutputVector():
             res.append(self.__outs[i].value)
         return res
 
-    def size(self):
-        return len(self.__outs)
+    def size(self): 
+        return len(self.__outs) # for compatibility
 
     def setvaluerange(self, arg1, arg2):
         for i in range(self.size()):

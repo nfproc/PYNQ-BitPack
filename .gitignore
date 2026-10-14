@@ -1,0 +1,6 @@
+**/__pycache__/**
+verilator/verilated
+verilator/bitpack_eval
+verilator/input.txt
+verilator/output.txt
+verilator/results.txt
