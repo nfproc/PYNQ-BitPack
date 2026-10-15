@@ -277,6 +277,13 @@ has to meet the following rules.
 ChangeLog
 ---------
 
+### v0.3.1 2026-10-15
+- 2-bit AFE (Amplitude and Frequency Encoding, or later referred to as Hybrid
+  Stochastic Number, proposed by Y. Chen and H. Li) representation is supported. 
+- When using random values in iterative evaluations, the input was constrained
+  to fall within the range of 1.0 to 0.0 (or -1.0), regardless of the
+  denominator's value.
+
 ### v0.3.0 2026-10-14
 - Iterative simulation using Verilator is supported. See the "Testbench for
   the wrapper circuit" section of this file for details.

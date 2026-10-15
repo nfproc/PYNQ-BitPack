@@ -50,5 +50,23 @@
       "n_count = (SN_IN_P & ~ SN_IN_N) ? DATA_OUT + 1'b1 :",
       "          (SN_IN_N & ~ SN_IN_P) ? DATA_OUT - 1'b1 : DATA_OUT;"
     ]
+  },
+  {
+    "name": "AFE-unipolar",
+    "default": false,
+    "postfix": ["_h", "_l"],
+    "has_negative": false,
+    "denominator": 2.0,
+    "generator": [
+      "// AFE mode, {out_p, out_n} is treated as 2-bit (1+1) fixed-point number",
+      "// NOTE: fraction part of DATA_IN in AFE mode is not [30:0] but [29:0]",
+      "n_comp_reg = (~DATA_IN[31]) ? ((DATA_IN[30]) ? 32'h3fffffff : DATA_IN) : 0;",
+      "n_sn_out_p = ~ n_shift_data[0] & comp_reg[29];",
+      "n_sn_out_n = (n_shift_data[31:3] < comp_reg[28:0]);"
+    ],
+    "counter": [
+      "// AFE mode, accumulate 2-bit output values",
+      "n_count = DATA_OUT + 32'({SN_IN_P, SN_IN_N});"
+    ]
   }
 ]

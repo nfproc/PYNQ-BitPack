@@ -1,5 +1,5 @@
 # custom driver for I/O ports of bitstream computation circuit
-# 2026-10-14 Naoki F., AIT
+# 2026-10-15 Naoki F., AIT
 # New BSD license is applied. See COPYING for more details.
 
 """bitpack_lib_io.py
@@ -96,10 +96,10 @@ class BitPackInput():
             return self.__uvalue
         if self.__random:
             r = self._getrand()
-            if self.__has_negative:
-                self.__uvalue = r
-            else:
-                self.__uvalue = r & 0x7fffffff
+            if not self.__has_negative or (r & 0x80000000) == 0:
+                self.__uvalue = int((r & 0x7fffffff) / self.__denominator)
+            else
+                self.__uvalue = 0x100000000 - int((0x100000000 - r) / self.__denominator)
         elif self.__value >= 0.0:
             self.__uvalue = self.__value / self.__denominator * 0x7fffffff
         else:
@@ -107,6 +107,9 @@ class BitPackInput():
                 self.__uvalue = 0x100000000 + self.__value / self.__denominator * 0x80000000
             else:
                 self.__uvalue = 0
+        # If __value is a very small negative value, __uvalue might be 0x100000000 here.
+        # So, lower 32 bits need to be explicitly extracted.
+        self.__uvalue = self.__uvalue & 0xffffffff
         return self.__uvalue
 
     def getvaluereal(self):

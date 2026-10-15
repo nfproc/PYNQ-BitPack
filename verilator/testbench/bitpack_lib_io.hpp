@@ -1,5 +1,5 @@
 // input/output abstraction for BitPack Verilator evaluation
-// 2026-10-14 Naoki F., AIT
+// 2026-10-15 Naoki F., AIT
 // New BSD license is applied. See COPYING for more details.
 
 #ifndef BITPACK_EVAL_IO_HPP
@@ -47,7 +47,11 @@ public:
         double uvalue;
         if (m_random) {
             const uint32_t r = m_rng->next();
-            uvalue = m_has_negative ? (double)r : (double)(r & 0x7fffffffu);
+            if (! m_has_negative || (r & 0x80000000u) == 0) {
+                uvalue = (double) (r & 0x7fffffffu) / m_denominator;
+            } else {
+                uvalue = 4294967296.0 - (double) (0x100000000llu - r) / m_denominator;
+            }
         } else if (m_value >= 0.0) {
             uvalue = m_value / m_denominator * 0x7fffffff;
         } else if (m_has_negative) {
